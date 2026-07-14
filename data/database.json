@@ -1,0 +1,15 @@
+{
+  "releases": [
+    {
+      "id": "v1-0-0",
+      "version": "v1.0.0",
+      "fileName": "khataindex_v1.0.0.apk",
+      "fileSize": 15414022,
+      "changelog": "• Initial launch of KhataIndex digital ledger\n• Seamless credit & debit tracking for small and medium merchants\n• Direct customer communications via SMS and WhatsApp reminders\n• Safe offline-first architecture with manual backup toggles\n• Beautiful visual analytics, outstanding balance indicators, and high-contrast styling",
+      "uploadDate": "2026-07-10T12:37:37.190Z",
+      "downloadCount": 142,
+      "isLatest": true,
+      "isVisible": true
+    }
+  ]
+}
