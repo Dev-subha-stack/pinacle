@@ -20,12 +20,13 @@ import {
   Smartphone,
   Lock
 } from "lucide-react";
-import { APKRelease, AppStats, SessionInfo } from "../types";
+import { APKRelease, AppStats, SessionInfo, AppScreenshot } from "../types";
 import { Screenshots } from "./Screenshots";
 
 interface PublicViewProps {
   releases: APKRelease[];
   stats: AppStats;
+  screenshots: AppScreenshot[];
   loading: boolean;
   currentUser: SessionInfo | null;
   onOpenLogin: (initialTab?: "login" | "register") => void;
@@ -33,7 +34,7 @@ interface PublicViewProps {
   onShowToast: (msg: string, type: "success" | "error" | "info") => void;
 }
 
-export function PublicView({ releases, stats, loading, currentUser, onOpenLogin, onRefresh, onShowToast }: PublicViewProps) {
+export function PublicView({ releases, stats, screenshots, loading, currentUser, onOpenLogin, onRefresh, onShowToast }: PublicViewProps) {
   const [downloading, setDownloading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [downloadUrl, setDownloadUrl] = useState<string>("");
@@ -279,7 +280,7 @@ export function PublicView({ releases, stats, loading, currentUser, onOpenLogin,
       {/* 3. SCREENSHOTS CAROUSEL & INTERACTIVE DEMO */}
       <section className="bg-[#1E293B]/10 border border-slate-800/50 py-12 rounded-3xl mx-2 md:mx-4">
         <div className="max-w-7xl mx-auto px-4">
-          <Screenshots />
+          <Screenshots screenshots={screenshots} />
         </div>
       </section>
 

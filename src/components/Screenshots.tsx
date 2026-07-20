@@ -20,7 +20,9 @@ import {
   Search
 } from "lucide-react";
 
-export function Screenshots() {
+import { AppScreenshot } from "../types";
+
+export function Screenshots({ screenshots = [] }: { screenshots?: AppScreenshot[] }) {
   const [activeTab, setActiveTab] = useState(0);
 
   const screens = [
@@ -255,6 +257,21 @@ export function Screenshots() {
     }
   ];
 
+  const displayScreens = screenshots.length > 0 
+    ? screenshots.map((s, idx) => ({
+        title: s.title || `Screenshot ${idx + 1}`,
+        desc: s.desc || "Visual preview of the KhataIndex application interface.",
+        component: (
+          <div className="w-full h-full bg-slate-950 flex flex-col font-sans select-none items-center justify-center">
+            <img src={s.imageUrl} alt={s.title} className="w-full h-full object-cover" />
+          </div>
+        )
+      }))
+    : screens;
+
+  // Make sure activeTab is within bounds
+  const currentTab = activeTab >= displayScreens.length ? 0 : activeTab;
+
   return (
     <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-8 px-4" id="screenshots-section">
       {/* Left side info description */}
@@ -274,23 +291,23 @@ export function Screenshots() {
 
         {/* Dynamic Selector Bullets */}
         <div className="space-y-4">
-          {screens.map((sc, i) => (
+          {displayScreens.map((sc, i) => (
             <button
               key={i}
               onClick={() => setActiveTab(i)}
               className={`w-full text-left p-4 rounded-xl border transition-all duration-300 flex items-start space-x-4 cursor-pointer ${
-                activeTab === i
+                currentTab === i
                   ? "bg-emerald-500/10 border-emerald-500 shadow-md shadow-emerald-500/5"
                   : "bg-[#1E293B]/20 border-slate-800 hover:border-slate-700"
               }`}
             >
               <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
-                activeTab === i ? "bg-emerald-500 text-slate-950" : "bg-slate-800 text-slate-400 border border-slate-700/50"
+                currentTab === i ? "bg-emerald-500 text-slate-950" : "bg-slate-800 text-slate-400 border border-slate-700/50"
               }`}>
                 {i + 1}
               </div>
               <div className="flex-1">
-                <h4 className={`text-sm font-bold ${activeTab === i ? "text-emerald-400" : "text-white"}`}>
+                <h4 className={`text-sm font-bold ${currentTab === i ? "text-emerald-400" : "text-white"}`}>
                   {sc.title}
                 </h4>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
@@ -318,7 +335,7 @@ export function Screenshots() {
 
           {/* Core Screen Container */}
           <div className="w-full h-full rounded-[30px] overflow-hidden bg-white relative flex flex-col border border-slate-900/10">
-            {screens[activeTab].component}
+            {displayScreens[currentTab].component}
           </div>
 
           {/* Bottom Home Indicator Bar */}

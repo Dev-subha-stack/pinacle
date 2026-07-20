@@ -11,6 +11,7 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { APKRelease, AppStats, User, SessionInfo } from "./src/types";
+import { getSupabase, syncFromSupabase, saveReleaseToSupabase, saveUserToSupabase, saveScreenshotToSupabase, deleteScreenshotFromSupabase } from "./src/lib/supabase";
 
 // Load environment variables
 dotenv.config();
@@ -24,6 +25,7 @@ const activeSessions = new Map<string, SessionInfo>();
 // Resolve directories
 const DATA_DIR = path.join(process.cwd(), "data");
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+const SCREENSHOTS_DIR = path.join(UPLOADS_DIR, "screenshots");
 const DB_PATH = path.join(DATA_DIR, "database.json");
 
 // Ensure directories exist
@@ -32,6 +34,9 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+if (!fs.existsSync(SCREENSHOTS_DIR)) {
+  fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
 }
 
 // Helper to parse cookies
@@ -53,7 +58,7 @@ function hashPassword(password: string): string {
 }
 
 // Database Helpers
-function readDB(): { releases: APKRelease[]; users: User[] } {
+function readDB(): { releases: APKRelease[]; users: User[]; screenshots: import("./src/types").AppScreenshot[] } {
   try {
     if (!fs.existsSync(DB_PATH)) {
       const initialData = {
@@ -70,7 +75,8 @@ function readDB(): { releases: APKRelease[]; users: User[] } {
             isVisible: true
           }
         ],
-        users: []
+        users: [],
+        screenshots: []
       };
       fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2), "utf-8");
 
@@ -88,16 +94,39 @@ function readDB(): { releases: APKRelease[]; users: User[] } {
     if (!data.users) {
       data.users = [];
     }
+    if (!data.screenshots) {
+      data.screenshots = [];
+    }
     return data;
   } catch (error) {
     console.error("Failed to read database, returning default fallback:", error);
-    return { releases: [], users: [] };
+    return { releases: [], users: [], screenshots: [] };
   }
 }
 
-function writeDB(data: { releases: APKRelease[]; users: User[] }) {
+function writeDB(data: { releases: APKRelease[]; users: User[]; screenshots: import("./src/types").AppScreenshot[] }) {
   try {
     fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf-8");
+    
+    // Asynchronous Background Sync to Supabase
+    const supabase = getSupabase();
+    if (supabase) {
+      Promise.resolve().then(async () => {
+        try {
+          for (const release of data.releases) {
+            await saveReleaseToSupabase(release);
+          }
+          for (const user of data.users) {
+            await saveUserToSupabase(user);
+          }
+          for (const screenshot of data.screenshots) {
+            await saveScreenshotToSupabase(screenshot);
+          }
+        } catch (err) {
+          console.error("Background sync to Supabase failed:", err);
+        }
+      });
+    }
   } catch (error) {
     console.error("Failed to write to database:", error);
   }
@@ -131,9 +160,35 @@ const upload = multer({
   },
 });
 
+const screenshotStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, SCREENSHOTS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e4);
+    cb(null, `screenshot_${uniqueSuffix}${ext}`);
+  },
+});
+
+const uploadScreenshot = multer({
+  storage: screenshotStorage,
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (![".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
+      return cb(new Error("File validation failed: Only image files are supported"));
+    }
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB image size limit
+  },
+});
+
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Authorization check middleware
 function getSessionInfo(req: express.Request): SessionInfo | null {
@@ -595,6 +650,87 @@ app.delete("/api/admin/releases/:id", requireAdmin, (req, res) => {
   res.json({ success: true, message: "Release successfully deleted" });
 });
 
+// GET: All Screenshots
+app.get("/api/screenshots", (req, res) => {
+  const db = readDB();
+  const sorted = [...db.screenshots].sort((a, b) => a.order - b.order);
+  res.json({ success: true, data: sorted });
+});
+
+// Admin: Upload a new screenshot
+app.post("/api/admin/screenshots", requireAdmin, uploadScreenshot.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "Please select an image file to upload" });
+  }
+
+  const { title, desc, order } = req.body;
+  
+  const db = readDB();
+  const newId = "sc-" + Date.now().toString(36);
+  
+  const newScreenshot = {
+    id: newId,
+    title: title || "New Screenshot",
+    desc: desc || "",
+    imageUrl: `/uploads/screenshots/${req.file.filename}`,
+    order: order ? parseInt(order, 10) : db.screenshots.length
+  };
+
+  db.screenshots.push(newScreenshot);
+  writeDB(db);
+
+  res.json({ success: true, data: newScreenshot, message: "Screenshot uploaded successfully!" });
+});
+
+// Admin: Delete a screenshot
+app.delete("/api/admin/screenshots/:id", requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const db = readDB();
+  const index = db.screenshots.findIndex(s => s.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ success: false, message: "Screenshot not found" });
+  }
+
+  const sc = db.screenshots[index];
+  const filePath = path.join(process.cwd(), sc.imageUrl);
+  
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    console.error(`Error deleting screenshot file ${filePath}:`, err);
+  }
+
+  db.screenshots.splice(index, 1);
+  writeDB(db);
+
+  // Background delete from Supabase if needed
+  deleteScreenshotFromSupabase(id).catch(err => console.error(err));
+
+  res.json({ success: true, message: "Screenshot deleted" });
+});
+
+// Admin: Reorder/Update screenshot
+app.put("/api/admin/screenshots/:id", requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const { title, desc, order } = req.body;
+  const db = readDB();
+  
+  const index = db.screenshots.findIndex(s => s.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, message: "Screenshot not found" });
+  }
+
+  if (title !== undefined) db.screenshots[index].title = title;
+  if (desc !== undefined) db.screenshots[index].desc = desc;
+  if (order !== undefined) db.screenshots[index].order = order;
+  
+  writeDB(db);
+  res.json({ success: true, data: db.screenshots[index], message: "Screenshot updated" });
+});
+
 // GET: Direct APK File Download Handler
 app.get("/api/download/:id", (req, res) => {
   const { id } = req.params;
@@ -659,8 +795,38 @@ app.get("/api/download-latest", (req, res) => {
   res.sendFile(filePath);
 });
 
+// Initial Sync from Supabase (if available) at startup
+async function initializeSupabaseSync() {
+  const supabase = getSupabase();
+  if (supabase) {
+    console.log("🔄 Initializing startup sync with Supabase...");
+    const remoteData = await syncFromSupabase();
+    if (remoteData) {
+      const localData = readDB();
+      // If Supabase is empty, we seed it with the current local data
+      if (remoteData.releases.length === 0 && remoteData.users.length === 0) {
+        console.log("🔥 Supabase database is empty. Seeding remote Supabase from local file-cache...");
+        for (const release of localData.releases) {
+          await saveReleaseToSupabase(release);
+        }
+        for (const user of localData.users) {
+          await saveUserToSupabase(user);
+        }
+      } else {
+        console.log("📥 Found remote Supabase data. Syncing down to local cache...");
+        fs.writeFileSync(DB_PATH, JSON.stringify(remoteData, null, 2), "utf-8");
+      }
+    }
+  }
+}
+
 // Setup Vite & Frontend static routing
 async function initServer() {
+  // Trigger Supabase sync at startup in the background
+  initializeSupabaseSync().catch((err) => {
+    console.error("⚠️ Background Supabase initialization sync failed:", err);
+  });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -679,5 +845,6 @@ async function initServer() {
     console.log(`[KhataIndex Server] Running full-stack APK distribution at http://0.0.0.0:${PORT}`);
   });
 }
+
 
 initServer();

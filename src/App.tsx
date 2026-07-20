@@ -44,6 +44,7 @@ export default function App() {
 
   // App Data State
   const [releases, setReleases] = useState<APKRelease[]>([]);
+  const [screenshots, setScreenshots] = useState<import("./types").AppScreenshot[]>([]);
   const [stats, setStats] = useState<AppStats>({
     totalDownloads: 0,
     totalReleases: 0,
@@ -97,6 +98,13 @@ export default function App() {
       const statsData = await statsRes.json();
       if (statsData.success) {
         setStats(statsData.data);
+      }
+
+      // Fetch screenshots
+      const screenshotsRes = await fetch("/api/screenshots");
+      const screenshotsData = await screenshotsRes.json();
+      if (screenshotsData.success) {
+        setScreenshots(screenshotsData.data);
       }
     } catch (err) {
       console.error("Failed to load backend releases:", err);
@@ -230,6 +238,7 @@ export default function App() {
           <AdminPanel 
             releases={releases} 
             stats={stats} 
+            screenshots={screenshots}
             currentUser={currentUser}
             onLogin={handleLoginSuccess}
             onLogout={handleLogout}
@@ -245,6 +254,7 @@ export default function App() {
           <PublicView 
             releases={releases} 
             stats={stats} 
+            screenshots={screenshots}
             loading={loading}
             currentUser={currentUser}
             onOpenLogin={handleOpenLogin}

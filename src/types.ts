@@ -3,6 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export interface AppScreenshot {
+  id: string;
+  title: string;
+  desc: string;
+  imageUrl: string;
+  order: number;
+}
+
 export interface APKRelease {
   id: string;
   version: string;

@@ -20,13 +20,15 @@ import {
   LogOut,
   Sliders,
   Settings,
-  Info
+  Info,
+  Image as ImageIcon
 } from "lucide-react";
-import { APKRelease, AppStats, SessionInfo } from "../types";
+import { APKRelease, AppStats, SessionInfo, AppScreenshot } from "../types";
 
 interface AdminPanelProps {
   releases: APKRelease[];
   stats: AppStats;
+  screenshots: AppScreenshot[];
   currentUser: SessionInfo | null;
   onLogin: (token: string, session: SessionInfo) => void;
   onLogout: () => void;
@@ -39,6 +41,7 @@ interface AdminPanelProps {
 export function AdminPanel({ 
   releases, 
   stats, 
+  screenshots,
   currentUser, 
   onLogin, 
   onLogout, 
@@ -66,6 +69,75 @@ export function AdminPanel({
   // Action Loading states
   const [toggleLoadingId, setToggleLoadingId] = useState<string | null>(null);
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
+
+  // Screenshot Upload States
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotTitle, setScreenshotTitle] = useState("");
+  const [screenshotDesc, setScreenshotDesc] = useState("");
+  const [screenshotUploading, setScreenshotUploading] = useState(false);
+  const screenshotInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScreenshotUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!screenshotFile) {
+      onShowToast("Please select a screenshot image", "error");
+      return;
+    }
+
+    setScreenshotUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", screenshotFile);
+      formData.append("title", screenshotTitle);
+      formData.append("desc", screenshotDesc);
+
+      const token = localStorage.getItem("kb_token");
+      const response = await fetch("/api/admin/screenshots", {
+        method: "POST",
+        headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        onShowToast("Screenshot uploaded successfully", "success");
+        setScreenshotFile(null);
+        setScreenshotTitle("");
+        setScreenshotDesc("");
+        if (screenshotInputRef.current) screenshotInputRef.current.value = "";
+        onRefresh();
+      } else {
+        onShowToast(result.message || "Failed to upload screenshot", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      onShowToast("Connection error", "error");
+    } finally {
+      setScreenshotUploading(false);
+    }
+  };
+
+  const handleScreenshotDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this screenshot?")) return;
+    
+    try {
+      const token = localStorage.getItem("kb_token");
+      const response = await fetch(`/api/admin/screenshots/${id}`, {
+        method: "DELETE",
+        headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+      });
+      const result = await response.json();
+      if (result.success) {
+        onShowToast("Screenshot deleted", "success");
+        onRefresh();
+      } else {
+        onShowToast(result.message || "Delete failed", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      onShowToast("Connection error", "error");
+    }
+  };
 
   // Handle administrator authentication
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -731,6 +803,110 @@ export function AdminPanel({
               )}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* 5. APP SCREENSHOTS MANAGER */}
+      <section className="bg-[#1E293B]/20 p-6 rounded-3xl border border-slate-800/80 shadow-md space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center space-x-2 text-white">
+            <ImageIcon className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-lg font-extrabold text-white">Manage App Screenshots</h2>
+          </div>
+          <span className="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full font-bold border border-slate-700/50">
+            {screenshots.length} screenshots
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Upload Form */}
+          <div className="lg:col-span-1 space-y-4">
+            <h3 className="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2">Add New Screenshot</h3>
+            <form onSubmit={handleScreenshotUpload} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">
+                  Image File
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={screenshotInputRef}
+                  onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">
+                  Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Dashboard View"
+                  value={screenshotTitle}
+                  onChange={(e) => setScreenshotTitle(e.target.value)}
+                  className="w-full bg-slate-950/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">
+                  Description (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="A short description..."
+                  value={screenshotDesc}
+                  onChange={(e) => setScreenshotDesc(e.target.value)}
+                  className="w-full bg-slate-950/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                disabled={screenshotUploading || !screenshotFile}
+                className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/30 disabled:opacity-50 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+              >
+                {screenshotUploading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                <span>{screenshotUploading ? "Uploading..." : "Upload Screenshot"}</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Screenshots Gallery */}
+          <div className="lg:col-span-2">
+            {screenshots.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center py-12 text-center text-slate-400 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
+                <ImageIcon className="w-8 h-8 mb-2 text-slate-500" />
+                <p className="text-sm">No screenshots uploaded yet.</p>
+                <p className="text-xs mt-1">Upload images to showcase your app in the public view.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {screenshots.map((sc, i) => (
+                  <div key={sc.id} className="relative group bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-sm">
+                    <div className="aspect-[9/16] w-full bg-slate-900 flex items-center justify-center relative">
+                      <img src={sc.imageUrl} alt={sc.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          onClick={() => handleScreenshotDelete(sc.id)}
+                          className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                          title="Delete Screenshot"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-2 border-t border-slate-800">
+                      <h4 className="text-[11px] font-bold text-slate-300 truncate">
+                        {sc.title || `Screenshot ${i + 1}`}
+                      </h4>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>
