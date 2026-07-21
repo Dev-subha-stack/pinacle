@@ -18,8 +18,8 @@ export function getSupabase(): SupabaseClient | null {
     return supabaseInstance;
   }
 
-  let supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  let supabaseUrl = "https://mcxxgadazmcfrzdadswn.supabase.co";
+  let supabaseServiceKey = "sb_publishable__z_kHl6M5xRckLm13fKXFA_EEl2zOCk";
 
   if (supabaseUrl) {
     supabaseUrl = supabaseUrl.replace(/^["']|["']$/g, '').trim();
