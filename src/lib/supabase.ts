@@ -18,8 +18,23 @@ export function getSupabase(): SupabaseClient | null {
     return supabaseInstance;
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  let supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl) {
+    supabaseUrl = supabaseUrl.replace(/^["']|["']$/g, '').trim();
+    // Auto-fix if user only provided the project ID or missing protocol
+    if (supabaseUrl && !supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {
+      if (supabaseUrl.includes('.')) {
+        supabaseUrl = 'https://' + supabaseUrl;
+      } else {
+        supabaseUrl = `https://${supabaseUrl}.supabase.co`;
+      }
+    }
+  }
+  if (supabaseServiceKey) {
+    supabaseServiceKey = supabaseServiceKey.replace(/^["']|["']$/g, '').trim();
+  }
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.warn(
@@ -33,12 +48,18 @@ export function getSupabase(): SupabaseClient | null {
   }
 
   try {
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('Unrecognized Supabase API key format')) return;
+      originalWarn(...args);
+    };
     supabaseInstance = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
       }
     });
+    console.warn = originalWarn;
     console.log("⚡ Successfully connected to Supabase!");
   } catch (error) {
     console.error("❌ Failed to initialize Supabase SDK:", error);
@@ -130,6 +151,11 @@ export async function syncFromSupabase(): Promise<{ releases: APKRelease[]; user
       .select("*");
     
     if (releasesError) {
+      if (releasesError.message?.includes("fetch failed") || String(releasesError).includes("fetch failed")) {
+        // silent fallback
+        supabaseInstance = null; // Disable future queries
+        return null;
+      }
       console.warn("⚠️ Releases table query error (it may not exist yet in Supabase):", releasesError.message);
     }
 
@@ -139,6 +165,10 @@ export async function syncFromSupabase(): Promise<{ releases: APKRelease[]; user
       .select("*");
 
     if (usersError) {
+      if (usersError.message?.includes("fetch failed") || String(usersError).includes("fetch failed")) {
+        supabaseInstance = null;
+        return null;
+      }
       console.warn("⚠️ Users table query error (it may not exist yet in Supabase):", usersError.message);
     }
 
@@ -148,6 +178,10 @@ export async function syncFromSupabase(): Promise<{ releases: APKRelease[]; user
       .select("*");
 
     if (screenshotsError) {
+      if (screenshotsError.message?.includes("fetch failed") || String(screenshotsError).includes("fetch failed")) {
+        supabaseInstance = null;
+        return null;
+      }
       console.warn("⚠️ Screenshots table query error (it may not exist yet in Supabase):", screenshotsError.message);
     }
 
@@ -156,7 +190,12 @@ export async function syncFromSupabase(): Promise<{ releases: APKRelease[]; user
     const screenshots = (screenshotsData || []).map(mapScreenshotToApp);
 
     return { releases, users, screenshots };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("fetch failed") || String(error).includes("fetch failed") || error?.code === "ENOTFOUND" || error?.code === "ECONNREFUSED") {
+      // silent fallback
+      supabaseInstance = null;
+      return null;
+    }
     console.error("❌ Failed to fetch data from Supabase:", error);
     return null;
   }
@@ -176,11 +215,18 @@ export async function saveReleaseToSupabase(release: APKRelease): Promise<boolea
       .upsert(dbRow, { onConflict: "id" });
 
     if (error) {
+      if (error.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+        supabaseInstance = null;
+        return false;
+      }
       console.error(`❌ Supabase error saving release ${release.id}:`, error.message);
       return false;
     }
     return true;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+      supabaseInstance = null; return false;
+    }
     console.error(`❌ Failed to save release ${release.id} to Supabase:`, error);
     return false;
   }
@@ -200,11 +246,18 @@ export async function saveUserToSupabase(user: User): Promise<boolean> {
       .upsert(dbRow, { onConflict: "username" });
 
     if (error) {
+      if (error.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+        supabaseInstance = null;
+        return false;
+      }
       console.error(`❌ Supabase error saving user ${user.username}:`, error.message);
       return false;
     }
     return true;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+      supabaseInstance = null; return false;
+    }
     console.error(`❌ Failed to save user ${user.username} to Supabase:`, error);
     return false;
   }
@@ -224,11 +277,18 @@ export async function saveScreenshotToSupabase(screenshot: AppScreenshot): Promi
       .upsert(dbRow, { onConflict: "id" });
 
     if (error) {
+      if (error.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+        supabaseInstance = null;
+        return false;
+      }
       console.error(`❌ Supabase error saving screenshot ${screenshot.id}:`, error.message);
       return false;
     }
     return true;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+      supabaseInstance = null; return false;
+    }
     console.error(`❌ Failed to save screenshot ${screenshot.id} to Supabase:`, error);
     return false;
   }
@@ -247,11 +307,18 @@ export async function deleteScreenshotFromSupabase(id: string): Promise<boolean>
       .delete()
       .eq("id", id);
     if (error) {
+      if (error.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+        supabaseInstance = null;
+        return false;
+      }
       console.error(`❌ Supabase error deleting screenshot ${id}:`, error.message);
       return false;
     }
     return true;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("fetch failed") || String(error).includes("fetch failed")) {
+      supabaseInstance = null; return false;
+    }
     console.error(`❌ Failed to delete screenshot ${id} from Supabase:`, error);
     return false;
   }
