@@ -36,18 +36,18 @@ export function Navbar({
     <header className="sticky top-0 z-50 bg-[#0F172A]/90 backdrop-blur-md border-b border-slate-800 px-4 py-3.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* KhataIndex Brand Logo */}
-        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => { if (isAdminView) onToggleView(); }}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <BookOpen className="w-5.5 h-5.5 text-white" />
+        <div className="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer" onClick={() => { if (isAdminView) onToggleView(); }}>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-xl text-white tracking-tight">Khata<span className="text-emerald-400">Index</span></span>
-              <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
+              <span className="font-extrabold text-lg sm:text-xl text-white tracking-tight leading-none">Khata<span className="text-emerald-400">Index</span></span>
+              <span className="hidden sm:inline-block bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20 leading-none">
                 Official Distribution
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium">Safe & Secure APK Portal</p>
+            <p className="hidden sm:block text-[10px] text-slate-400 font-medium mt-0.5">Safe & Secure APK Portal</p>
           </div>
         </div>
 
@@ -64,8 +64,8 @@ export function Navbar({
 
           {/* User Session status area */}
           {currentUser ? (
-            <div className="flex items-center space-x-3 bg-slate-950/40 border border-slate-800/80 p-1.5 pr-3.5 rounded-2xl">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-extrabold text-xs">
+            <div className="flex items-center space-x-2 sm:space-x-3 bg-slate-950/40 border border-slate-800/80 p-1.5 sm:pr-3.5 pr-1.5 rounded-2xl">
+              <div className="w-8 h-8 shrink-0 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-extrabold text-xs">
                 {getInitials(currentUser.fullName || currentUser.username)}
               </div>
               <div className="hidden sm:block text-left">

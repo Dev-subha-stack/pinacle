@@ -156,7 +156,7 @@ export function PublicView({ releases, stats, screenshots, loading, currentUser,
                     <button
                       onClick={handleDownloadLatest}
                       disabled={downloading}
-                      className="bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 disabled:from-slate-700 disabled:to-slate-800 text-slate-950 font-extrabold text-base px-8 py-4 rounded-2xl flex items-center justify-center space-x-3 shadow-lg shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer group"
+                      className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 disabled:from-slate-700 disabled:to-slate-800 text-slate-950 font-extrabold text-sm sm:text-base px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl flex items-center justify-center space-x-3 shadow-lg shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer group"
                     >
                       {downloading ? (
                         <RefreshCw className="w-5 h-5 animate-spin text-slate-950" />
@@ -171,17 +171,17 @@ export function PublicView({ releases, stats, screenshots, loading, currentUser,
                     </button>
 
                     {/* App Specs Card Inline */}
-                    <div className="flex items-center space-x-4 px-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
+                    <div className="flex items-center justify-between sm:justify-start sm:space-x-4 px-4 py-3 sm:py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
                       <div className="text-left">
                         <p className="text-[10px] text-slate-400 font-semibold uppercase">Version</p>
                         <p className="text-sm font-extrabold text-white">{latestRelease.version}</p>
                       </div>
-                      <div className="w-[1px] h-6 bg-slate-800"></div>
+                      <div className="hidden sm:block w-[1px] h-6 bg-slate-800"></div>
                       <div className="text-left">
                         <p className="text-[10px] text-slate-400 font-semibold uppercase">File Size</p>
                         <p className="text-sm font-extrabold text-white">{formatBytes(latestRelease.fileSize)}</p>
                       </div>
-                      <div className="w-[1px] h-6 bg-slate-800"></div>
+                      <div className="hidden sm:block w-[1px] h-6 bg-slate-800"></div>
                       <div className="text-left">
                         <p className="text-[10px] text-slate-400 font-semibold uppercase">Released</p>
                         <p className="text-sm font-extrabold text-white">{formatDate(latestRelease.uploadDate)}</p>
@@ -190,8 +190,8 @@ export function PublicView({ releases, stats, screenshots, loading, currentUser,
                   </div>
 
                   <p className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    Secure connection. APK file signed by KhataIndex developer keys.
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Secure connection. APK file signed by KhataIndex developer keys.</span>
                   </p>
                 </div>
               ) : (
@@ -205,7 +205,7 @@ export function PublicView({ releases, stats, screenshots, loading, currentUser,
             </div>
 
             {/* Right QR Code Column */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center">
+            <div className="hidden lg:flex lg:col-span-5 flex-col items-center justify-center">
               {latestRelease && qrCodeUrl ? (
                 <div className="bg-slate-950/40 p-5 rounded-3xl shadow-xl border border-slate-800 flex flex-col items-center max-w-[280px]">
                   <div className="bg-white p-3 rounded-2xl border border-slate-200 relative group">

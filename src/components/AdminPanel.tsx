@@ -693,8 +693,8 @@ export function AdminPanel({
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+        <div className="overflow-x-auto pb-4">
+          <table className="w-full text-left text-sm border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase text-[10px] tracking-wide">
                 <th className="py-3 px-4">Version</th>
