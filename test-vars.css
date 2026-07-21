@@ -1,0 +1,5 @@
+@import "tailwindcss";
+.light {
+  --color-slate-900: #fff;
+  --color-slate-100: #000;
+}

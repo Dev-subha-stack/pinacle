@@ -5,6 +5,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
+@custom-variant light (&:is(.light *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -26,137 +27,135 @@ h1, h2, h3, .font-display {
 }
 
 /* HIGH-CONTRAST LIGHT MODE PERSISTENT STYLES */
-.light, .light body {
-  background-color: #F8FAFC !important;
-  color: #0F172A !important;
+:where(.light), :where(.light) body {
+  background-color: #F8FAFC ;
+  color: #0F172A ;
 }
 
 /* Custom background maps for light theme */
-.light .bg-\[\#0F172A\] {
-  background-color: #F8FAFC !important;
+:where(.light) .bg-\[\#0F172A\] {
+  background-color: #F8FAFC ;
 }
 
-.light .bg-\[\#0F172A\]\/90 {
-  background-color: rgba(248, 250, 252, 0.9) !important;
+:where(.light) .bg-\[\#0F172A\]\/90 {
+  background-color: rgba(248, 250, 252, 0.9) ;
 }
 
-.light .bg-\[\#1E293B\] {
-  background-color: #FFFFFF !important;
-  border-color: #E2E8F0 !important;
+:where(.light) .bg-\[\#1E293B\] {
+  background-color: #FFFFFF ;
+  border-color: #E2E8F0 ;
 }
 
-.light .bg-\[\#1E293B\]\/40 {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-  border-color: #E2E8F0 !important;
+:where(.light) .bg-\[\#1E293B\]\/40 {
+  background-color: rgba(255, 255, 255, 0.8) ;
+  border-color: #E2E8F0 ;
 }
 
-.light .bg-slate-900 {
-  background-color: #F1F5F9 !important;
+:where(.light) .bg-slate-900 {
+  background-color: #F1F5F9 ;
 }
 
-.light .bg-slate-900\/40 {
-  background-color: rgba(241, 245, 249, 0.6) !important;
+:where(.light) .bg-slate-900\/40 {
+  background-color: rgba(241, 245, 249, 0.6) ;
 }
 
-.light .bg-slate-950 {
-  background-color: #E2E8F0 !important;
+:where(.light) .bg-slate-950 {
+  background-color: #E2E8F0 ;
 }
 
-.light .bg-slate-950\/40 {
-  background-color: rgba(241, 245, 249, 0.7) !important;
+:where(.light) .bg-slate-950\/40 {
+  background-color: rgba(241, 245, 249, 0.7) ;
 }
 
-.light .bg-slate-950\/60 {
-  background-color: rgba(226, 232, 240, 0.8) !important;
+:where(.light) .bg-slate-950\/60 {
+  background-color: rgba(226, 232, 240, 0.8) ;
 }
 
-.light .bg-slate-800\/60 {
-  background-color: rgba(241, 245, 249, 0.8) !important;
+:where(.light) .bg-slate-800\/60 {
+  background-color: rgba(241, 245, 249, 0.8) ;
 }
 
 /* Border overrides */
-.light .border-slate-800 {
-  border-color: #E2E8F0 !important;
+:where(.light) .border-slate-800 {
+  border-color: #E2E8F0 ;
 }
 
-.light .border-slate-800\/60 {
-  border-color: #E2E8F0 !important;
+:where(.light) .border-slate-800\/60 {
+  border-color: #E2E8F0 ;
 }
 
-.light .border-slate-800\/80 {
-  border-color: #E2E8F0 !important;
+:where(.light) .border-slate-800\/80 {
+  border-color: #E2E8F0 ;
 }
 
-.light .border-slate-700\/40,
-.light .border-slate-700\/50,
-.light .border-slate-700\/60 {
-  border-color: #CBD5E1 !important;
+:where(.light) .border-slate-700\/40,
+:where(.light) .border-slate-700\/50,
+:where(.light) .border-slate-700\/60 {
+  border-color: #CBD5E1 ;
 }
 
-.light .divide-slate-800\/40 > * + * {
-  border-color: #E2E8F0 !important;
+:where(.light) .divide-slate-800\/40 > * + * {
+  border-color: #E2E8F0 ;
 }
 
-.light .divide-slate-800\/60 > * + * {
-  border-color: #E2E8F0 !important;
+:where(.light) .divide-slate-800\/60 > * + * {
+  border-color: #E2E8F0 ;
 }
 
 /* Text overrides */
-.light .text-slate-100,
-.light .text-slate-200,
-.light .text-slate-300,
-.light .text-white {
-  color: #0F172A !important;
+:where(.light) .text-slate-100,
+:where(.light) .text-slate-200,
+:where(.light) .text-slate-300
+/* removed */ {
+  color: #0F172A ;
 }
 
-.light .text-slate-400 {
-  color: #475569 !important;
+:where(.light) .text-slate-400 {
+  color: #475569 ;
 }
 
-.light .text-slate-500 {
-  color: #64748B !important;
+:where(.light) .text-slate-500 {
+  color: #64748B ;
 }
 
 /* Modals and backdrop overrides */
-.light .bg-slate-950\/85 {
-  background-color: rgba(15, 23, 42, 0.35) !important;
+:where(.light) .bg-slate-950\/85 {
+  background-color: rgba(15, 23, 42, 0.35) ;
 }
 
 /* Buttons and input overlays */
-.light .bg-slate-800 {
-  background-color: #E2E8F0 !important;
-  color: #0F172A !important;
+:where(.light) .bg-slate-800 {
+  background-color: #E2E8F0 ;
+  color: #0F172A ;
 }
 
-.light .bg-slate-800:hover {
-  background-color: #CBD5E1 !important;
+
+
+:where(.light) input:not([type="checkbox"]):not([type="radio"]), 
+:where(.light) textarea {
+  background-color: #FFFFFF ;
+  color: #0F172A ;
+  border-color: #CBD5E1 ;
 }
 
-.light input:not([type="checkbox"]):not([type="radio"]), 
-.light textarea {
-  background-color: #FFFFFF !important;
-  color: #0F172A !important;
-  border-color: #CBD5E1 !important;
+:where(.light) input:not([type="checkbox"]):not([type="radio"]):focus, 
+:where(.light) textarea:focus {
+  border-color: #10B981 ; /* emerald-500 */
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) ;
 }
 
-.light input:not([type="checkbox"]):not([type="radio"]):focus, 
-.light textarea:focus {
-  border-color: #10B981 !important; /* emerald-500 */
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
-}
-
-.light input[disabled] {
-  background-color: #F1F5F9 !important;
-  color: #94A3B8 !important;
-  border-color: #E2E8F0 !important;
+:where(.light) input[disabled] {
+  background-color: #F1F5F9 ;
+  color: #94A3B8 ;
+  border-color: #E2E8F0 ;
 }
 
 /* Specific elements like table or grid headers */
-.light .text-slate-200\/90 {
-  color: #1E293B !important;
+:where(.light) .text-slate-200\/90 {
+  color: #1E293B ;
 }
 
-.light .text-slate-300\/90 {
-  color: #334155 !important;
+:where(.light) .text-slate-300\/90 {
+  color: #334155 ;
 }
 
